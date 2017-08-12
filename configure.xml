@@ -1,0 +1,109 @@
+<?xml version = '1.0' encoding = 'UTF-8' ?>
+<UNISET_GO_EXAMPLE>
+<UniSet>
+		<NameService host="localhost" port="2809"/>
+		<LocalNode	 name="localhost"/>
+		<RootSection name="UNISET_GO_EXAMPLE"/>
+
+		<CountOfNet 		name="1"/>
+		<RepeatCount 		name="3"/>
+		<RepeatTimeoutMS 	name="50"/>
+
+		<WatchDogTime 		name="0"/> <!-- [мин] -->
+		<PingNodeTime 		name="0"/> <!-- [сек] -->
+		<AutoStartUpTime 	name="1"/> <!-- [сек] -->
+		<DumpStateTime 		name="10"/><!-- [сек] -->
+		<SleepTickMS		name="500"/><!-- [мсек] -->
+
+		<!-- Debug, logs -->
+		<UniSetDebug name="unideb"/>
+
+		<!-- Если не указано, то считается текущий каталог -->
+		<ConfDir name=""/>
+		<DataDir name=""/>
+		<BinDir name=""/>
+		<LogDir name=""/>
+		<DocDir name=""/>
+		<LockDir name=""/>
+
+	<Services>
+		<LocalDBServer name="DBServer" dbnode="" dbname="UNISET_PLC" dbuser="dbadmin" dbpass="dbadmin" pingTime="60000" reconnectTime="30000"/>
+	</Services>
+
+</UniSet>
+
+	<dlog name="dlog" levels="" file=""/>
+
+	<SharedMemory1 name="SharedMemory1"/>
+	<UProxy1 name="UProxy1"/>
+
+<ObjectsMap idfromfile="1">
+<!--
+	Краткие пояснения к полям секции 'sensors'
+	==========================================
+	node 		- узел на котором физически находится данный датчик
+	iotype 		- тип датчика
+	priority 	- приоритет сообщения об изменении данного датчика
+	textname 	- текстовое имя датчика
+-->
+	<nodes port="2809">
+		<item id="1000" name="localhost" alias="" textname="Локальный узел" ip="127.0.0.1"/>
+		<item id="1001" name="node2" alias="" textname="Локальный узел" ip="127.0.0.1"/>
+	</nodes>
+
+	<!-- ************************ Датчики ********************** -->
+	<sensors name="Sensors">
+		<item id="1" name="Input1_S" textname="Команда 1" iotype="DI" priority="Medium" default="1" />
+		<item id="20" name="AI20_S" textname="AI20" iotype="AI" default="20"/>
+	</sensors>
+
+	<thresholds name="thresholds">
+	</thresholds>
+
+	<controllers name="Controllers">
+		<item id="90" name="SharedMemory1"/>
+	</controllers>
+
+	<!-- ******************* Идентификаторы сервисов ***************** -->
+	<services name="Services">
+		<item id="99" name="TimeService"/>
+	</services>
+
+	<!-- ******************* Идентификаторы объектов ***************** -->
+	<objects name="UniObjects">
+		<item id="100" name="TestProc"/>
+		<item id="101" name="UProxy1"/>
+		<item id="102" name="UProxy2"/>
+	</objects>
+</ObjectsMap>
+
+	<messages name="messages" idfromfile="1" >
+	</messages>
+	<Calibrations name="Calibrations">
+		<diagram name="testcal">
+			<point x="-1000" y="-300"/>
+			<point x="-900" y="-250"/>
+			<point x="-800" y="-200"/>
+			<point x="-700" y="-150"/>
+			<point x="-600" y="-100"/>
+			<point x="-500" y="-80"/>
+			<point x="-200" y="-60"/>
+			<point x="-100" y="-60"/>
+			<point x="-50" y="-20"/>
+			<point x="-10" y="0"/>
+			<point x="0" y="0"/>
+			<point x="10" y="0"/>
+			<point x="50" y="20"/>
+			<point x="100" y="60"/>
+			<point x="200" y="60"/>
+			<point x="300" y="80"/>
+			<point x="400" y="100"/>
+			<point x="500" y="150"/>
+			<point x="600" y="200"/>
+			<point x="700" y="250"/>
+			<point x="800" y="300"/>
+			<point x="900" y="400"/>
+			<point x="1000" y="600"/>
+		</diagram>
+	</Calibrations>
+</UNISET_GO_EXAMPLE>
