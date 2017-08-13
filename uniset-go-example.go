@@ -7,6 +7,8 @@ package main
 // а второй (опустощающий) должен включиться. Как только бак опустошился
 // опять включается наполнящий насос.
 // Задача написать логику реализующую это взаимодействие, через uniset-датчики.
+// В целом это решение на go, задачи отсюда: https://habrahabr.ru/post/278535/
+//
 // ----------------
 import (
 	"fmt"
@@ -25,16 +27,25 @@ func main() {
 		fmt.Print("UProxy: Not ACTIVE after run")
 	}
 
-	pump1 := &Pump{"Pump1", 100, make(chan uniset.UMessage, 10), make(chan uniset.UMessage, 10)}
-	pump2 := &Pump{"Pump2", 101, make(chan uniset.UMessage, 10), make(chan uniset.UMessage, 10)}
+	pumpFill := NewPump("PumpFill", 20004,
+		100,
+		101,
+		102,
+		103)
 
-	act.Add(pump1)
-	act.Add(pump2)
+	pumpDrain := NewPump("PumpDrain", 20005,
+		100,
+		101,
+		102,
+		103)
+
+	act.Add(pumpFill)
+	act.Add(pumpDrain)
 
 	var wg sync.WaitGroup
 
-	go pump1.Run(&wg)
-	go pump2.Run(&wg)
+	go pumpFill.Run(&wg)
+	go pumpDrain.Run(&wg)
 
 	act.WaitFinish()
 
