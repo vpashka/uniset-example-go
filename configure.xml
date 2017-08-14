@@ -45,6 +45,8 @@
 			<item id="101" name="Level_AS" iotype="AI" textname="Текущий уровень в цистерне"/>
 			<item id="102" name="CmdLoad_C" iotype="DO" textname="Команда на включение насоса 'наполнения'"/>
 			<item id="103" name="CmdUnload_C" iotype="DO" textname="Команда на включение насоса 'опустошения'"/>
+			<item id="104" name="UnloadComplete_S" iotype="DI" textname="'опустошение' завершено"/>
+			<item id="105" name="LoadComplete_S" iotype="DI" textname="'наполнение' завершено"/>
 		</sensors>
 		<thresholds name="thresholds">
 		</thresholds>
