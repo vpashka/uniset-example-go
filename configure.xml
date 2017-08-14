@@ -66,6 +66,7 @@
 			<item id="20003" name="UProxy1"/>
 			<item id="20004" name="PumpFill"/>
 			<item id="20005" name="PumpDrain"/>
+			<item id="20006" name="Imitator"/>
 		</objects>
 	</ObjectsMap>
 </UNISET_GO_EXAMPLE>

@@ -1,3 +1,15 @@
+// Реализация управления "насосами"
+// Т.к. наполняющий и опустощающий насосы отличаются только порогом срабатывания
+// то для простоты введён флаг fill - означающий какую логику реализует данный насос.
+// И везде, где логика различается проверяется этот флаг, в остальном веськод одинаковый
+// Основная идея:
+// - у каждого "объекта" есть входы и выходы (оформленные в виде список и отдельный полей)
+// - имеется main loop (см. функцию Run), в котором идёт
+//   - обработка сообщений об изменении датчиков и входов (doUpdateInputs)
+//   - шаг алгоритма (doStep)
+//   - обновление состояния выходов (doUpdateOutputs)
+//
+
 package main
 
 import (
@@ -28,10 +40,10 @@ type Pump struct {
 	evnchannel chan uniset.UMessage
 	cmdchannel chan uniset.UMessage
 
-	din  []BoolValue  // список bool-вых входов
-	ain  []Int64Value // список аналоговых входов
-	dout []BoolValue  // список bool-вых выходов
-	aout []Int64Value // список аналоговых выходов
+	din  []*uniset.BoolValue  // список bool-вых входов
+	ain  []*uniset.Int64Value // список аналоговых входов
+	dout []*uniset.BoolValue  // список bool-вых выходов
+	aout []*uniset.Int64Value // список аналоговых выходов
 
 	// датчики
 	level_s      uniset.SensorID
@@ -76,17 +88,17 @@ func NewPump(name string, id uniset.ObjectID,
 	p.levelLimit = levelLimit
 	p.fill = fill
 
-	p.din = []BoolValue{
-		{&p.onControl_s, &p.in_onControl_s, p.in_onControl_s},
-		{&p.isComplete_s, &p.in_isComplete_s, p.in_isComplete_s}	}
+	p.din = []*uniset.BoolValue{
+		uniset.NewBoolValue(&p.onControl_s, &p.in_onControl_s),
+		uniset.NewBoolValue(&p.isComplete_s, &p.in_isComplete_s)}
 
-	p.ain = []Int64Value{{&p.level_s, &p.in_level_s, p.in_level_s}}
+	p.ain = []*uniset.Int64Value{uniset.NewInt64Value(&p.level_s, &p.in_level_s)}
 
-	p.dout = []BoolValue{
-		{&p.switchOn_c, &p.out_switchOn_c, p.out_switchOn_c},
-		{&p.complete_c, &p.out_complete_c, p.out_complete_c}}
+	p.dout = []*uniset.BoolValue{
+		uniset.NewBoolValue(&p.switchOn_c, &p.out_switchOn_c),
+		uniset.NewBoolValue(&p.complete_c, &p.out_complete_c)}
 
-	p.aout = []Int64Value{}
+	p.aout = []*uniset.Int64Value{}
 
 	return &p
 }
@@ -111,14 +123,13 @@ func (p *Pump) Run(wg *sync.WaitGroup) {
 
 	defer wg.Done()
 
+	// шаг алгоритма
+	step := time.After(250 * time.Millisecond)
+
+	// как часто обновлять выходы
+	outs := time.After(250 * time.Millisecond)
+
 	for {
-
-		// шаг алгоритма
-		step := time.After(250 * time.Millisecond)
-
-		// как часто обновлять выходы
-		outs := time.After(250 * time.Millisecond)
-
 		select {
 		case umsg, ok := <-p.evnchannel:
 
@@ -142,13 +153,17 @@ func (p *Pump) Run(wg *sync.WaitGroup) {
 			_, ok = umsg.PopAsFinishEvent()
 			if ok {
 				p.doFinish()
-				break
+				fmt.Printf("%s: finish\n",p.name)
+				return
 			}
+
 		case <-step:
 			p.doStep()
+			step = time.After(250 * time.Millisecond)
 
 		case <-outs:
 			p.doUpdateOutputs()
+			outs = time.After(250 * time.Millisecond)
 		}
 	}
 }
@@ -157,6 +172,11 @@ func (p *Pump) Run(wg *sync.WaitGroup) {
 func (p *Pump) doActivate() {
 
 	fmt.Printf("%s: activate Ok\n", p.name)
+
+	// инициализируем выходы
+	uniset.DoReadBoolInputs(&p.dout)
+	uniset.DoReadAnalogInputs(&p.aout)
+	p.doUpdateOutputs()
 	// заказываем датчики
 	p.doAskSensors()
 }
@@ -164,13 +184,8 @@ func (p *Pump) doActivate() {
 // ----------------------------------------------------------------------------------
 func (p *Pump) doAskSensors() {
 
-	for _, s := range p.din {
-		uniset.AskSensor(p.cmdchannel, *s.sid)
-	}
-
-	for _, s := range p.ain {
-		uniset.AskSensor(p.cmdchannel, *s.sid)
-	}
+	uniset.DoAskSensorsBool(&p.din, p.cmdchannel)
+	uniset.DoAskSensorsAnalog(&p.ain, p.cmdchannel)
 }
 
 // ----------------------------------------------------------------------------------
@@ -179,34 +194,20 @@ func (p *Pump) doFinish() {
 	fmt.Printf("%s: finish..\n", p.name)
 	// сбрасываем выходы в 0
 	p.out_switchOn_c = false
+	p.out_complete_c = false
 	p.doUpdateOutputs()
+	close(p.cmdchannel)
 }
 
 // ----------------------------------------------------------------------------------
 func (p *Pump) doUpdateInputs(sm *uniset.SensorEvent) {
 
-	for _, s := range p.din {
-		if *s.sid == sm.Id {
-			if sm.Value == 0 {
-				*s.val = false
-			} else {
-				*s.val = true
-			}
-
-			s.prev = *s.val
-		}
-	}
-
-	for _, s := range p.ain {
-		if *s.sid == sm.Id {
-			*s.val = sm.Value
-			s.prev = sm.Value
-		}
-	}
+	uniset.DoUpdateBoolInputs(&p.din, sm)
+	uniset.DoUpdateAnalogInputs(&p.ain, sm)
 }
 
 // ----------------------------------------------------------------------------------
-func (p *Pump) needWork() bool {
+func (p *Pump) isLevelOk() bool {
 
 	if p.fill {
 		return p.in_level_s >= p.levelLimit
@@ -228,13 +229,22 @@ func (p *Pump) doSensorEvent(sm *uniset.SensorEvent) {
 			if p.fill {
 				fmt.Printf("%s: Начинаю наполнение\n", p.name)
 				p.isWorking = true
+				p.out_complete_c = false
+			} else {
+				p.isWorking = false
+				p.out_complete_c = false
 			}
 		}
 
-	} else if sm.Id == p.level_s {
-
 	} else if sm.Id == p.isComplete_s {
-		if p.needWork() {
+		if p.in_isComplete_s && !p.isLevelOk() {
+
+			if p.fill {
+				fmt.Printf("%s: начинаю наполнять..\n", p.name)
+			} else {
+				fmt.Printf("%s: начинаю опустошать..\n", p.name)
+			}
+
 			p.isWorking = true
 		}
 	}
@@ -243,48 +253,31 @@ func (p *Pump) doSensorEvent(sm *uniset.SensorEvent) {
 // ----------------------------------------------------------------------------------
 func (p *Pump) doStep() {
 
-	//fmt.Printf("%s (step): onControl=%d isWorking=%d fill=%d\n",p.name, p.in_onControl_s,p.isWorking,p.fill)
-
-	// если управление отключено
-	// ничего не делаем
+	// если управление отключено ничего не делаем
 	if !p.in_onControl_s {
 		return
 	}
 
 	if !p.isWorking {
+		p.out_switchOn_c = false
+		p.out_complete_c = false
 		return
 	}
 
-	if p.fill {
-
-		// Логика наполняющего насоса
-
-		if p.needWork() {
-			fmt.Printf("%s: наполнять закончил..\n", p.name)
-			p.out_switchOn_c = false
-			p.out_complete_c = true
-			p.isWorking = false
+	if p.isLevelOk() {
+		if p.fill {
+			fmt.Printf("%s: наполнять закончил\n", p.name)
 		} else {
-			p.isWorking = true
-			p.out_switchOn_c = true
-			p.out_complete_c = false
+			fmt.Printf("%s: опустошать закончил\n", p.name)
 		}
-
+		p.out_switchOn_c = false
+		p.out_complete_c = true
+		p.isWorking = false
 	} else {
-
-		// Логика опустощающего насоса
-
-		if p.needWork() {
-			fmt.Printf("%s: опустошать закончил..\n", p.name)
-			p.out_switchOn_c = false
-			p.out_switchOn_c = true
-			p.isWorking = false
-		} else {
-			p.isWorking = true
-			p.out_switchOn_c = true
-			p.out_switchOn_c = false
-		}
+		p.out_switchOn_c = true
+		p.out_complete_c = false
 	}
+
 }
 
 // ----------------------------------------------------------------------------------
@@ -292,25 +285,6 @@ func (p *Pump) doStep() {
 // обновляем (делаем setValue)
 func (p *Pump) doUpdateOutputs() {
 
-	for _, s := range p.dout {
-		if s.prev != *s.val {
-			var val int64
-			if *s.val {
-				val = 1
-			}
-			uniset.SetValue(p.cmdchannel, *s.sid, val)
-			// возможно обновлять prev, стоит после подтверждения от UProxy
-			// но пока для простосты обновляем сразу
-			s.prev = *s.val
-		}
-	}
-
-	for _, s := range p.aout {
-		if s.prev != *s.val {
-			uniset.SetValue(p.cmdchannel, *s.sid, *s.val)
-			// возможно обновлять prev, стоит после подтверждения от UProxy
-			// но пока для простосты обновляем сразу
-			s.prev = *s.val
-		}
-	}
+	uniset.DoUpdateAnalogOutputs(&p.aout, p.cmdchannel)
+	uniset.DoUpdateBoolOutputs(&p.dout, p.cmdchannel)
 }
