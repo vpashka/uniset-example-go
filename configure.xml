@@ -32,8 +32,9 @@
 		  <settings> - обязательная секция если для настройки используется uniset-configurator
 	-->
 	<settings>
-	   <Imitator name="Imitator1" Level_s="Level_AS" cmdLoad_c="CmdLoad_C" cmdUnload_c="CmdUnload_C"/>
-	   <Controller name="Controller1" HiLevel="90" OnControl_s="OnControl_S" Level_s="Level_AS" cmdLoad_c="CmdLoad_C" cmdUnload_c="CmdUnload_C"/>
+	   <Imitator name="Imitator1" Level_s="Level_AS" cmdLoad_c="CmdLoad_C" cmdUnload_c="CmdUnload_C" level_s="Level_AS" cmdUnLoad_c="CmdUnload_C"/>
+	   <Pump name="PumpFill" level_s="Level_AS" onControl_s="OnControl_S" isComplete_s="UnloadComplete_S" switchOn_c="CmdLoad_C" complete_c="LoadComplete_S"/>
+	   <Pump name="PumpDrain" level_s="Level_AS" onControl_s="OnControl_S" isComplete_s="LoadComplete_S" switchOn_c="CmdUnload_C" complete_c="UnloadComplete_S"/>
 	</settings>
 	<ObjectsMap idfromfile="1" no_dep="0">
 		<nodes>
@@ -66,7 +67,7 @@
 			<item id="20003" name="UProxy1"/>
 			<item id="20004" name="PumpFill"/>
 			<item id="20005" name="PumpDrain"/>
-			<item id="20006" name="Imitator"/>
+			<item id="20006" name="Imitator1"/>
 		</objects>
 	</ObjectsMap>
 </UNISET_GO_EXAMPLE>

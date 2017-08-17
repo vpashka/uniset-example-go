@@ -11,13 +11,15 @@ package main
 // ----------------
 import (
 	"fmt"
-	"sync"
 	"uniset"
+	"sync"
 )
 
 func main() {
 
-	act := uniset.NewUProxy("UProxy1", "configure.xml", 53817)
+	uniset.Init("configure.xml",53817)
+
+	act := uniset.NewUProxy("UProxy1")
 
 	defer act.Terminate()
 	act.Run()
@@ -26,29 +28,9 @@ func main() {
 		fmt.Print("UProxy: Not ACTIVE after run")
 	}
 
-	pumpFill := NewPump("PumpFill", 20004,
-		100,
-		101,
-		102,
-		104,
-		105,
-		true,
-		100)
-
-	pumpDrain := NewPump("PumpDrain", 20005,
-		100,
-		101,
-		103,
-		105,
-		104,
-		false,
-		10)
-
-	im := NewImitator("Imitator", 2006,
-		101,
-		102,
-		103,
-		5, 0, 100)
+	pumpFill := NewPump("PumpFill", "Pump", true, 100)
+	pumpDrain := NewPump("PumpDrain", "Pump", false,10)
+	im := NewImitator("Imitator1", "Imitator",	5, 0, 100)
 
 	act.Add(pumpFill)
 	act.Add(pumpDrain)
