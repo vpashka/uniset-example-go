@@ -30,7 +30,7 @@ func NewImitator(name string, section string, step int64, min int64, max int64) 
 	im.evnchannel = make(chan uniset.UMessage, 10)
 	im.cmdchannel = make(chan uniset.UMessage, 10)
 
-	Init_Imitator(&im, name,section)
+	Init_Imitator(&im, name, section)
 
 	im.min = min
 	im.max = max
@@ -89,7 +89,7 @@ func (im *Imitator) Run(wg *sync.WaitGroup) {
 			_, ok = umsg.PopAsFinishEvent()
 			if ok {
 				im.doFinish()
-				fmt.Printf("%s: finish\n",im.myname)
+				fmt.Printf("%s: finish\n", im.myname)
 				return
 			}
 		case <-step:

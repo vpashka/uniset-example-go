@@ -37,7 +37,7 @@ func NewPump(name string, section string, fill bool, levelLimit int64) *Pump {
 	p.evnchannel = make(chan uniset.UMessage, 10)
 	p.cmdchannel = make(chan uniset.UMessage, 10)
 
-	Init_Pump(&p,name, section)
+	Init_Pump(&p, name, section)
 
 	p.levelLimit = levelLimit
 	p.fill = fill
@@ -94,7 +94,7 @@ func (p *Pump) Run(wg *sync.WaitGroup) {
 			_, ok = umsg.PopAsFinishEvent()
 			if ok {
 				p.doFinish()
-				fmt.Printf("%s: finish\n",p.myname)
+				fmt.Printf("%s: finish\n", p.myname)
 				return
 			}
 

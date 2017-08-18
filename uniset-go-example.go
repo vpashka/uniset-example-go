@@ -1,18 +1,13 @@
+// ------------------------------------
+// Денстрационный пример работы с uniset
+// см. README.md
+// ------------------------------------
 package main
 
-// Пример работы с пакетом uniset
-// Демонстрационная задача:
-// Есть два насоса, один наполняет бак, другой опустошает.
-// Как только бак наполнился, наполнявший насос должен отключиться,
-// а второй (опустощающий) должен включиться. Как только бак опустошился
-// опять включается наполнящий насос (а-ля "пинг-понг")
-// Задача написать логику реализующую это взаимодействие, через uniset-датчики.
-//
-// ----------------
 import (
 	"fmt"
-	"uniset"
 	"sync"
+	"uniset"
 )
 
 func main() {
@@ -29,8 +24,8 @@ func main() {
 	}
 
 	pumpFill := NewPump("PumpFill", "Pump", true, 100)
-	pumpDrain := NewPump("PumpDrain", "Pump", false,10)
-	im := NewImitator("Imitator1", "Imitator",	5, 0, 100)
+	pumpDrain := NewPump("PumpDrain", "Pump", false, 10)
+	im := NewImitator("Imitator1", "Imitator", 5, 0, 100)
 
 	act.Add(pumpFill)
 	act.Add(pumpDrain)

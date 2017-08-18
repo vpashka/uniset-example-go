@@ -7,3 +7,7 @@ pump_sk.go: pump.src.xml
 
 imitator_sk.go: imitator.src.xml
 	./uniset2-codegen-go -l ./ -n Imitator imitator.src.xml
+
+
+clean:
+	rm -rf *_sk.go
