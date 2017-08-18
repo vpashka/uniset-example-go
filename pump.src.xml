@@ -12,6 +12,7 @@
 	<set name="class-name" val="Pump"/>
   </settings>
   <variables>
+	  <item name="levelLimit" type="long" max="100" min="0" default="0"/>
   </variables>
   <smap>
 	<item name="level_s" iotype="AI" vartype="in" comment="уровень в цистерне"/>

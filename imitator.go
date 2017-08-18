@@ -1,5 +1,6 @@
 // Реализация имитатора.
-// Основная задача, по команда увеличивать или уменшать значение датчика уровня.
+// Основная задача, по командам увеличивать или уменьшать значение датчика уровня.
+// основные поля генерируются при помощи uniset-codegen-go
 
 package main
 
@@ -18,23 +19,15 @@ type Imitator struct {
 
 	// датчики
 	Imitator_SK
-
-	min  int64
-	max  int64
-	step int64
 }
 
 // ----------------------------------------------------------------------------------
-func NewImitator(name string, section string, step int64, min int64, max int64) *Imitator {
+func NewImitator(name string, section string) *Imitator {
 	im := Imitator{}
 	im.evnchannel = make(chan uniset.UMessage, 10)
 	im.cmdchannel = make(chan uniset.UMessage, 10)
 
 	Init_Imitator(&im, name, section)
-
-	im.min = min
-	im.max = max
-	im.step = step
 
 	return &im
 }
@@ -60,10 +53,10 @@ func (im *Imitator) Run(wg *sync.WaitGroup) {
 	defer wg.Done()
 
 	// шаг алгоритма
-	step := time.After(250 * time.Millisecond)
+	step := time.After(im.sleep_msec)
 
 	// как часто обновлять выходы
-	outs := time.After(250 * time.Millisecond)
+	outs := time.After(im.sleep_msec)
 
 	for {
 		select {
@@ -94,11 +87,11 @@ func (im *Imitator) Run(wg *sync.WaitGroup) {
 			}
 		case <-step:
 			im.doStep()
-			step = time.After(250 * time.Millisecond)
+			step = time.After(im.sleep_msec)
 
 		case <-outs:
 			im.doUpdateOutputs()
-			outs = time.After(250 * time.Millisecond)
+			outs = time.After(im.sleep_msec)
 		}
 	}
 }

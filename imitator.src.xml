@@ -12,6 +12,9 @@
 	<set name="class-name" val="Imitator"/>
   </settings>
   <variables>
+	   <item name="step" type="long" default="5"/>
+	   <item name="min" type="long" default="0"/>
+	   <item name="max" type="long" default="100"/>
   </variables>
   <smap>
 	<item name="level_s" iotype="AI" vartype="out" comment="уровень в цистерне"/>

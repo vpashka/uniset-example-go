@@ -8,6 +8,7 @@ package main
 
 import (
 	"fmt"
+	"time"
 	"uniset"
 )
 
@@ -15,9 +16,9 @@ import (
 type Imitator_SK struct {
 
 	// ID
-	level_s     uniset.SensorID
-	cmdLoad_c   uniset.SensorID
-	cmdUnLoad_c uniset.SensorID
+	level_s     uniset.ObjectID
+	cmdLoad_c   uniset.ObjectID
+	cmdUnLoad_c uniset.ObjectID
 
 	// i/o
 	out_level_s    int64
@@ -25,12 +26,16 @@ type Imitator_SK struct {
 	in_cmdUnLoad_c int64
 
 	// variables
+	step int64 /*!<  */
+	min  int64 /*!<  */
+	max  int64 /*!<  */
 
 	ins  []*uniset.Int64Value // список входов
 	outs []*uniset.Int64Value // список выходов
 
-	myname string
-	id     uniset.ObjectID
+	myname     string
+	id         uniset.ObjectID
+	sleep_msec time.Duration
 }
 
 // ----------------------------------------------------------------------------------
@@ -45,9 +50,24 @@ func Init_Imitator(sk *Imitator, name string, section string) {
 
 	sk.id = uniset.InitObjectID(cfg, "", name)
 
+	sk.sleep_msec = time.Duration(200 * time.Millisecond)
+	sk.step = uniset.InitInt64(cfg, "step", "5")
+	sk.min = uniset.InitInt64(cfg, "min", "0")
+	sk.max = uniset.InitInt64(cfg, "max", "100")
+
 	sk.level_s = uniset.InitSensorID(cfg, "level_s", "")
 	sk.cmdLoad_c = uniset.InitSensorID(cfg, "cmdLoad_c", "")
 	sk.cmdUnLoad_c = uniset.InitSensorID(cfg, "cmdUnLoad_c", "")
+
+	if sk.level_s == uniset.DefaultObjectID {
+		panic(fmt.Sprintf("%s(Init_Imitator): Unknown ID for level_s\n", sk.myname))
+	}
+	if sk.cmdLoad_c == uniset.DefaultObjectID {
+		panic(fmt.Sprintf("%s(Init_Imitator): Unknown ID for cmdLoad_c\n", sk.myname))
+	}
+	if sk.cmdUnLoad_c == uniset.DefaultObjectID {
+		panic(fmt.Sprintf("%s(Init_Imitator): Unknown ID for cmdUnLoad_c\n", sk.myname))
+	}
 
 	sk.ins = []*uniset.Int64Value{
 		uniset.NewInt64Value(&sk.cmdLoad_c, &sk.in_cmdLoad_c),

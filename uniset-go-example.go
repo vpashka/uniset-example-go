@@ -5,9 +5,9 @@
 package main
 
 import (
-	"fmt"
 	"sync"
 	"uniset"
+	"fmt"
 )
 
 func main() {
@@ -17,15 +17,15 @@ func main() {
 	act := uniset.NewUProxy("UProxy1")
 
 	defer act.Terminate()
-	act.Run()
 
-	if !act.IsActive() {
-		fmt.Print("UProxy: Not ACTIVE after run")
+	err := act.Run()
+	if err != nil {
+		panic(fmt.Sprintf("UProxy run error: %s",err))
 	}
 
-	pumpFill := NewPump("PumpFill", "Pump", true, 100)
-	pumpDrain := NewPump("PumpDrain", "Pump", false, 10)
-	im := NewImitator("Imitator1", "Imitator", 5, 0, 100)
+	pumpFill := NewPump("PumpFill", "Pump", true)
+	pumpDrain := NewPump("PumpDrain", "Pump", false)
+	im := NewImitator("Imitator1", "Imitator")
 
 	act.Add(pumpFill)
 	act.Add(pumpDrain)

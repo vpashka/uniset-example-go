@@ -8,6 +8,7 @@ package main
 
 import (
 	"fmt"
+	"time"
 	"uniset"
 )
 
@@ -15,11 +16,11 @@ import (
 type Pump_SK struct {
 
 	// ID
-	level_s      uniset.SensorID
-	onControl_s  uniset.SensorID
-	isComplete_s uniset.SensorID
-	switchOn_c   uniset.SensorID
-	complete_c   uniset.SensorID
+	level_s      uniset.ObjectID
+	onControl_s  uniset.ObjectID
+	isComplete_s uniset.ObjectID
+	switchOn_c   uniset.ObjectID
+	complete_c   uniset.ObjectID
 
 	// i/o
 	in_level_s      int64
@@ -29,12 +30,14 @@ type Pump_SK struct {
 	out_complete_c  int64
 
 	// variables
+	levelLimit int64 /*!<  */
 
 	ins  []*uniset.Int64Value // список входов
 	outs []*uniset.Int64Value // список выходов
 
-	myname string
-	id     uniset.ObjectID
+	myname     string
+	id         uniset.ObjectID
+	sleep_msec time.Duration
 }
 
 // ----------------------------------------------------------------------------------
@@ -49,11 +52,38 @@ func Init_Pump(sk *Pump, name string, section string) {
 
 	sk.id = uniset.InitObjectID(cfg, "", name)
 
+	sk.sleep_msec = time.Duration(200 * time.Millisecond)
+	sk.levelLimit = uniset.InitInt64(cfg, "levelLimit", "0")
+
+	if sk.levelLimit < 0 {
+		panic(fmt.Sprintf("%s(Init_Pump): levelLimit must be > 0\n", sk.myname))
+	}
+
+	if sk.levelLimit > 100 {
+		panic(fmt.Sprintf("%s(Init_Pump): levelLimit must be < 100\n", sk.myname))
+	}
+
 	sk.level_s = uniset.InitSensorID(cfg, "level_s", "")
 	sk.onControl_s = uniset.InitSensorID(cfg, "onControl_s", "")
 	sk.isComplete_s = uniset.InitSensorID(cfg, "isComplete_s", "")
 	sk.switchOn_c = uniset.InitSensorID(cfg, "switchOn_c", "")
 	sk.complete_c = uniset.InitSensorID(cfg, "complete_c", "")
+
+	if sk.level_s == uniset.DefaultObjectID {
+		panic(fmt.Sprintf("%s(Init_Pump): Unknown ID for level_s\n", sk.myname))
+	}
+	if sk.onControl_s == uniset.DefaultObjectID {
+		panic(fmt.Sprintf("%s(Init_Pump): Unknown ID for onControl_s\n", sk.myname))
+	}
+	if sk.isComplete_s == uniset.DefaultObjectID {
+		panic(fmt.Sprintf("%s(Init_Pump): Unknown ID for isComplete_s\n", sk.myname))
+	}
+	if sk.switchOn_c == uniset.DefaultObjectID {
+		panic(fmt.Sprintf("%s(Init_Pump): Unknown ID for switchOn_c\n", sk.myname))
+	}
+	if sk.complete_c == uniset.DefaultObjectID {
+		panic(fmt.Sprintf("%s(Init_Pump): Unknown ID for complete_c\n", sk.myname))
+	}
 
 	sk.ins = []*uniset.Int64Value{
 		uniset.NewInt64Value(&sk.level_s, &sk.in_level_s),

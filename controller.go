@@ -1,14 +1,14 @@
 // Реализация управления "насосами"
 // Т.к. наполняющий и опустощающий насосы отличаются только порогом срабатывания
 // то для простоты введён флаг fill - означающий какую логику реализует данный насос.
-// И везде, где логика различается проверяется этот флаг, в остальном веськод одинаковый
+// И везде, где логика различается проверяется этот флаг, в остальном весь код одинаковый
 // Основная идея:
-// - у каждого "объекта" есть входы и выходы (оформленные в виде список и отдельный полей)
+// - у каждого "объекта" есть входы и выходы (оформленные в виде списков и отдельный полей)
 // - имеется main loop (см. функцию Run), в котором идёт
 //   - обработка сообщений об изменении датчиков и входов (doUpdateInputs)
 //   - шаг алгоритма (doStep)
 //   - обновление состояния выходов (doUpdateOutputs)
-//
+// note: основные поля генерируются при помощи uniset-codegen-go
 
 package main
 
@@ -27,19 +27,17 @@ type Pump struct {
 	Pump_SK
 
 	fill       bool  // признак того, что насос наполняющий
-	levelLimit int64 // порог до которого работаем
 	isWorking  bool
 }
 
 // ----------------------------------------------------------------------------------
-func NewPump(name string, section string, fill bool, levelLimit int64) *Pump {
+func NewPump(name string, section string, fill bool) *Pump {
 	p := Pump{}
 	p.evnchannel = make(chan uniset.UMessage, 10)
 	p.cmdchannel = make(chan uniset.UMessage, 10)
 
 	Init_Pump(&p, name, section)
 
-	p.levelLimit = levelLimit
 	p.fill = fill
 	return &p
 }
@@ -65,10 +63,10 @@ func (p *Pump) Run(wg *sync.WaitGroup) {
 	defer wg.Done()
 
 	// шаг алгоритма
-	step := time.After(250 * time.Millisecond)
+	step := time.After(p.sleep_msec)
 
 	// как часто обновлять выходы
-	outs := time.After(250 * time.Millisecond)
+	outs := time.After(p.sleep_msec)
 
 	for {
 		select {
@@ -100,11 +98,11 @@ func (p *Pump) Run(wg *sync.WaitGroup) {
 
 		case <-step:
 			p.doStep()
-			step = time.After(250 * time.Millisecond)
+			step = time.After(p.sleep_msec)
 
 		case <-outs:
 			p.doUpdateOutputs()
-			outs = time.After(250 * time.Millisecond)
+			outs = time.After(p.sleep_msec)
 		}
 	}
 }
@@ -219,8 +217,7 @@ func (p *Pump) doStep() {
 }
 
 // ----------------------------------------------------------------------------------
-// Проходим по выходам и если значение поменялось, относительно предыдущего
-// обновляем (делаем setValue)
+// Проходим по выходам и обновляем
 func (p *Pump) doUpdateOutputs() {
 	uniset.DoUpdateOutputs(&p.outs, p.cmdchannel)
 }
