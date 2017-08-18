@@ -17,7 +17,7 @@ import (
 
 func main() {
 
-	uniset.Init("configure.xml",53817)
+	uniset.Init("configure.xml")
 
 	act := uniset.NewUProxy("UProxy1")
 
