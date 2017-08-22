@@ -26,8 +26,8 @@ type Pump struct {
 	cmdchannel chan uniset.UMessage
 	Pump_SK
 
-	fill       bool  // признак того, что насос наполняющий
-	isWorking  bool
+	fill      bool // признак того, что насос наполняющий
+	isWorking bool
 }
 
 // ----------------------------------------------------------------------------------

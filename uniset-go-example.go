@@ -5,22 +5,22 @@
 package main
 
 import (
+	"fmt"
 	"sync"
 	"uniset"
-	"fmt"
 )
 
 func main() {
 
 	uniset.Init("configure.xml")
 
-	act := uniset.NewUProxy("UProxy1")
+	act := uniset.NewDefaultUProxy("UProxy1")
 
 	defer act.Terminate()
 
 	err := act.Run()
 	if err != nil {
-		panic(fmt.Sprintf("UProxy run error: %s",err))
+		panic(fmt.Sprintf("UProxy run error: %s", err))
 	}
 
 	pumpFill := NewPump("PumpFill", "Pump", true)
